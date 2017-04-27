@@ -1,1 +1,2 @@
-arrival-glyph-code
+#Arrival Glyphs Encoding/Decoding 
+> Better README to be provided.

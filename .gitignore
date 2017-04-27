@@ -1,0 +1,5 @@
+# Sublime-specific files
+*.sublime-workspace
+
+# Python compiled files
+*.pyc
