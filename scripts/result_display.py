@@ -3,8 +3,10 @@
 #
 
 import matplotlib.pyplot as plt
-from os.path import join
 import cv2
+
+from os.path import join
+from os import remove, listdir
 
 # The folder in which to store outputs
 OUTPUT_FOLDER = "out"
@@ -79,3 +81,12 @@ def displaySequential(global_title, images, save = False):
 
 	if not save:
 		cv2.destroyWindow(global_title)
+
+
+# Deletes all the files in the OUTPUT_FOLDER except for the .gitkeep file
+def cleanOutputFolder():
+	global OUTPUT_FOLDER
+
+	filesToDelete = [join(OUTPUT_FOLDER,f) for f in listdir(OUTPUT_FOLDER) if not f.endswith(".gitkeep")]
+	for f in filesToDelete:
+		remove(f)
