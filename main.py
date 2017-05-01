@@ -23,7 +23,7 @@ def main():
 	cleanOutputFolder()
 
 	for folder, file, img in image_samples(glyphs, numbers):
-		print "Processing glpyh {0}".format(file)
+		print("Processing glpyh ", (file))
 
 		processed, intermediary = process_frame(img)
 		displaySequential(file, intermediary, save=True)
