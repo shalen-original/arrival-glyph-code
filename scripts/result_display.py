@@ -78,8 +78,8 @@ def display_sequential(global_title, images, save=False):
             cv2.imwrite(join(OUTPUT_FOLDER, "{0}-{1}-{2}.png".format(global_title, curr, title)), image)
         else:
             cv2.imshow(global_title, image)
-            cv2.waitKey(0)
-    curr += 1
+            cv2.waitKey(0)   
+        curr += 1
 
     if not save:
         cv2.destroyWindow(global_title)
