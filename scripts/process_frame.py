@@ -55,7 +55,7 @@ def process_frame(frame):
 
 	# If circles are detected, the list of circles is extracted
 	circles = circles[0]
-	#intermediary.append(('circles', __draw_all_circles(frame, circles)))
+	#intermediary.append(('circles', __draw_all_circles(frame_resized, circles)))
 
 	# Computers the mean of all the centers of all the circles found.
 	# The resulting point will very probably be very close to the center of the glyph.
