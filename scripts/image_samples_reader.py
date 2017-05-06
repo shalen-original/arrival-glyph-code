@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isfile, isdir, join
 
 
-SAMPLES_PATH = "samples"  # Path to samples relative to main.py
+SAMPLES_PATH = "samples/images"  # Path to samples relative to main.py
 
 
 # Generator function that loads one at the time the various samples from
