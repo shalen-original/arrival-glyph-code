@@ -46,8 +46,8 @@ def process_frame(frame):
 
 	# choose best contour and display its "arrivality"
 	chosen, arrivality = get_best_contour(sorted_contours, gauss.shape)
-	intermediary.append(('chosen contour', chosen))
-	print("Arrivality: ", arrivality)
+	# intermediary.append(('chosen contour', chosen))
+	# print("Arrivality: ", arrivality)
 
 
 	chosen_debug = None
@@ -55,8 +55,6 @@ def process_frame(frame):
 		chosen_debug, data = read_circle_segment(chosen)
 	if chosen_debug is not None:
 		intermediary.append(('debug_image', chosen_debug))
-	if data is not None:
-		print(list(data))
 
 	return chosen, intermediary, data
 
@@ -127,6 +125,10 @@ def get_best_contour(sorted_contours, shape):
 				best_arr = arrivality
 		else:
 			break
+
+		if best_arr > 150:
+			break
+
 	return best_cnt, best_arr
 
 # gives back arrivality coefficient for whole contour. the higher the better
@@ -199,10 +201,12 @@ def get_circle_from_mask(mask, diagonal):
 
 	return center, radius, arrivalidity
 
+
 # reads a glyph radially from its center
 # returns the mask(?) and a list of read data
 # todo make independent from radius by choosing a fixed number for read splits
-def read_data_from_center(mask, center, radius, angle, readSplits, minDist, maxDistCheck):
+def read_data_from_center(mask, center, radius, angle, minDist, maxDistCheck):
+	readSplits = 3600
 	# reads data from frame in which a valid circle has been detected
 	radAngle = (angle)/180 * math.pi
 	#reads thickness of sign radially
@@ -222,6 +226,8 @@ def read_data_from_center(mask, center, radius, angle, readSplits, minDist, maxD
 		result.append(pixelSum)
 
 	result = np.array(result)
+	result = np.trim_zeros(result, trim="f")
+	result = np.pad(result, (0, (readSplits - len(result)) % readSplits), 'constant')
 	result = result/radius*1000
 	# result[result == 0] = -1
 
@@ -323,7 +329,7 @@ def read_circle_segment(sign):
 			except Exception as x:
 				traceback.print_exc()
 				pass
-			mask, read = read_data_from_center(black_bgr, center, radius, angle, readSplits, minDist, maxDistCheck)
+			mask, read = read_data_from_center(black_bgr, center, radius, angle, minDist, maxDistCheck)
 			read = read.tolist()
 	else:
 		black_bgr = None
