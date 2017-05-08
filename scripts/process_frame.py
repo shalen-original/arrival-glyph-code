@@ -10,6 +10,7 @@ import math
 
 
 def process_frame(frame, show=False, debug=False, read=False):
+	output_size = (1280, 720)
 	data = []
 	intermediary = []
 	#intermediary.append(("original", frame))
@@ -38,7 +39,7 @@ def process_frame(frame, show=False, debug=False, read=False):
 	im2, contours, hierarchy = cv2.findContours(gauss, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 	# Filtering contours too big or too small
-	contours = [c for c in contours if 1000 <= cv2.contourArea(c) <= 60000]
+	contours = [c for c in contours if 1000 <= cv2.contourArea(c) <= 70000]
 	#intermediary.append(("contours", __draw_all_contours(gauss, contours)))
 
 	# get a list of all contours and sort the contours according to it
@@ -53,7 +54,7 @@ def process_frame(frame, show=False, debug=False, read=False):
 				frame_resized = cv2.fillPoly(frame_resized, pts=chosen_cnt, color=(255, 150, 150))
 
 		cv2.imshow("frame", frame_resized)
-	intermediary.append(('chosen contour', cv2.cvtColor(chosen, cv2.COLOR_GRAY2BGR)))
+	intermediary.append(('chosen contour', chosen))
 	# print("Arrivality: ", arrivality)
 
 	if read:
@@ -96,6 +97,9 @@ def __random_color():
 	r = random.randint(0, 255)
 
 	return (b, g, r)
+
+
+
 
 
 # computes angle of vector from center in reference to zero PI

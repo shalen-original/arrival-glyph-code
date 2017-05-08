@@ -17,7 +17,7 @@ def main():
 	# ALl glyphs, all numbers
 	glyphs = ["AbbotIsDead"]
 	numbers = ["00"]
-	show_results = True
+	show_results = False
 
 	clean_output_folder()
 
