@@ -222,8 +222,8 @@ def get_circle_from_mask(mask, diagonal):
 
 # reads a glyph radially from its center
 # returns the mask(?) and a list of read data
-# todo make independent from radius by choosing a fixed number for read splits
 def read_data_from_center(mask, center, radius, angle, minDist, maxDistCheck):
+	# todo tune readsplits
 	readSplits = 3600
 	# reads data from frame in which a valid circle has been detected
 	radAngle = (angle)/180 * math.pi
