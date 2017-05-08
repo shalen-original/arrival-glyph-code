@@ -71,5 +71,5 @@ def video_samples(only_glyphs=[], only_numbers=[]):
     # the loaded image is returned
     for folder in glyphs:
         for file in glyphs[folder]:
-            video = cv2.imread(join(VIDEO_SAMPLES_PATH, folder, file), cv2.IMREAD_COLOR)
+            video = join(VIDEO_SAMPLES_PATH, folder,  file)
             yield (folder, file, video)

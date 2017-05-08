@@ -15,19 +15,19 @@ from scripts.process_file import *
 def main():
 
 	# ALl glyphs, all numbers
-	glyphs = ["BeforeAndAfter"]
-	numbers = []
+	glyphs = ["AbbotIsDead"]
+	numbers = ["00"]
 	show_results = True
 
 	clean_output_folder()
 
 	# all_data = process_all_pictures()
 	# all_data =  process_all_videos()
-	all_data = process_pictures(glyphs, numbers)
-	# all_data =  process_videos(glyphs, numbers)
+	# all_data = process_pictures(glyphs, numbers)
+	all_data =  process_videos(glyphs, numbers, save=True, show=True, debug=False, read=False)
 
 
-	if show_results:
+	if show_results and all_data != []:
 		for d in all_data:
 			plt.plot(d)
 		plt.ylabel("read and normaized value")

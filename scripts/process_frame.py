@@ -9,10 +9,10 @@ import random
 import math
 
 
-def process_frame(frame):
+def process_frame(frame, show=False, debug=False, read=False):
 	data = []
 	intermediary = []
-	intermediary.append(("original", frame))
+	#intermediary.append(("original", frame))
 
 	# The resolution on which to work
 	# curr_size = (1920, 1080) # Full HD (1080p)
@@ -21,6 +21,7 @@ def process_frame(frame):
 
 	# Resize to computable resolution
 	frame_resized = cv2.resize(frame, curr_size, interpolation = cv2.INTER_AREA)
+	intermediary.append(("resized", frame_resized))
 
 	# Convert to grayscale
 	grayscale = cv2.cvtColor(frame_resized, cv2.COLOR_RGB2GRAY)
@@ -44,17 +45,23 @@ def process_frame(frame):
 	contAreas = [cv2.contourArea(x) for x in contours]
 	sorted_contours = sorted(zip(contAreas, contours), key=lambda x: x[0], reverse=True)
 
-	# choose best contour and display its "arrivality"
-	chosen, arrivality = get_best_contour(sorted_contours, gauss.shape)
-	# intermediary.append(('chosen contour', chosen))
+	# square around best (chosen) and display its "arrivality", as well as returnig the chosen contour
+	chosen, arrivality, chosen_cnt = get_best_contour(sorted_contours, gauss.shape, debug=debug)
+	if show:
+		if debug:
+			if chosen_cnt is not None:
+				frame_resized = cv2.fillPoly(frame_resized, pts=chosen_cnt, color=(255, 150, 150))
+
+		cv2.imshow("frame", frame_resized)
+	intermediary.append(('chosen contour', cv2.cvtColor(chosen, cv2.COLOR_GRAY2BGR)))
 	# print("Arrivality: ", arrivality)
 
-
-	chosen_debug = None
-	if chosen is not None:
-		chosen_debug, data = read_circle_segment(chosen)
-	if chosen_debug is not None:
-		intermediary.append(('debug_image', chosen_debug))
+	if read:
+		chosen_debug = None
+		if chosen is not None:
+			chosen_debug, data = read_circle_segment(chosen)
+		if chosen_debug is not None:
+			intermediary.append(('debug_image', chosen_debug))
 
 	return chosen, intermediary, data
 
@@ -102,34 +109,41 @@ def get_distance(p1, p2):
 
 # chooses best contour out of a list of (area, contour) - tuples
 # needs shape of source-image
-def get_best_contour(sorted_contours, shape):
+def get_best_contour(sorted_contours, shape, debug=False):
 	arrivality = None
+	best_mask = None
 	best_cnt = None
+	best_cnt_area = 0
 	best_arr = 0
 	for cnt in sorted_contours:
-		if cnt[0] > 1000:
+		# todo tune thresholds to values that makes sense. Big speedup possible.
+		if 100000 > cnt[0] > 6000:
 			# The choosen contour is drawn
 			mask = np.zeros(shape, dtype='uint8')
 			mask = cv2.fillPoly(mask, pts=[cnt[1]], color=(255, 255, 255))
 			x, y, w, h = cv2.boundingRect(cnt[1])
-			mask = mask[y:y + h, x:x + w]
+			cnt_mask = mask[y:y + h, x:x + w]
 
-			diagonal_half = int(round(math.sqrt(mask.shape[0]**2 + mask.shape[1]**2)/2))
+			diagonal_half = int(round(math.sqrt(cnt_mask.shape[0]**2 + cnt_mask.shape[1]**2)/2))
 			try:
-				center, radius, arrivality = get_circle_from_mask(mask,diagonal_half)
+				center, radius, arrivality = get_circle_from_mask(cnt_mask,diagonal_half)
 			except:
 				pass
 			if best_arr is None or arrivality is not None and arrivality > best_arr:
-
-				best_cnt = mask
+				best_cnt_area = cnt[0]
+				best_cnt = [cnt[1]]
+				best_mask = cnt_mask
 				best_arr = arrivality
 		else:
 			break
 
-		if best_arr > 150:
+		# todo tune coefficient
+		if best_arr > 60:
 			break
+	if debug:
+		print("Arrivality: ", best_arr, "\tArea: ", best_cnt_area)
 
-	return best_cnt, best_arr
+	return best_mask, best_arr, best_cnt
 
 # gives back arrivality coefficient for whole contour. the higher the better
 def get_total_arrivality(mask, center, radius):
@@ -145,7 +159,7 @@ def get_total_arrivality(mask, center, radius):
 # gives back arrivality coefficient for single radius in contour.
 def get_arrivality(mask, center, radius):
 	arrivality = 0
-	for ang in range(360):
+	for ang in range(100):
 		pX = int(round(radius * math.cos(ang) + center[0]))
 		pY = int(round(radius * math.sin(ang) + center[1]))
 
