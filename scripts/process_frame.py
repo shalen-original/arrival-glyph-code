@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import random
 import math
+from scripts.decode_frame import *
 
 
 def process_frame(frame, show=False, debug=False, read=False):
@@ -46,7 +47,7 @@ def process_frame(frame, show=False, debug=False, read=False):
 	contAreas = [cv2.contourArea(x) for x in contours]
 	sorted_contours = sorted(zip(contAreas, contours), key=lambda x: x[0], reverse=True)
 
-	# square around best (chosen) and display its "arrivality", as well as returnig the chosen contour
+	# square around best (chosen), as well as returning the chosen contour
 	chosen, arrivality, chosen_cnt = get_best_contour(sorted_contours, gauss.shape, debug=debug)
 	if show:
 		if debug:
@@ -55,7 +56,6 @@ def process_frame(frame, show=False, debug=False, read=False):
 
 		cv2.imshow("frame", frame_resized)
 	intermediary.append(('chosen contour', chosen))
-	# print("Arrivality: ", arrivality)
 
 	if read:
 		chosen_debug = None
@@ -130,7 +130,7 @@ def get_best_contour(sorted_contours, shape, debug=False):
 
 			diagonal_half = int(round(math.sqrt(cnt_mask.shape[0]**2 + cnt_mask.shape[1]**2)/2))
 			try:
-				center, radius, arrivality = get_circle_from_mask(cnt_mask,diagonal_half)
+				center, radius, arrivality = get_circle_from_mask(cnt_mask)
 			except:
 				pass
 			if best_arr is None or arrivality is not None and arrivality > best_arr:
@@ -150,6 +150,7 @@ def get_best_contour(sorted_contours, shape, debug=False):
 	return best_mask, best_arr, best_cnt
 
 # gives back arrivality coefficient for whole contour. the higher the better
+# in the theoretical worst case arrivality can be -200, best case +100
 def get_total_arrivality(mask, center, radius):
 	# todo tune coefficients on glyphs
 	inner_radius = 0.8 * radius
@@ -181,9 +182,10 @@ def get_center_from_points(a,b,c):
 	c = (x - y) * (w - abs(w) ** 2) / 2j / w.imag - x
 	return (int(round(-c.real)), int(round(-c.imag))), int(round(abs(c + x)))
 
+
 # computes the best fitting circle for a single contour-mask
 # retruns center, radisu and arrivality
-def get_circle_from_mask(mask, diagonal):
+def get_circle_from_mask(mask):
 	center = (int(round(mask.shape[1]/2)), int(round(mask.shape[0]/2)))
 	radius = None
 	circle_points = []
@@ -195,9 +197,11 @@ def get_circle_from_mask(mask, diagonal):
 	# cv2.imshow("distancemap",dist)
 	# cv2.waitKey(0)
 
+	diagonal_half = int(round(math.sqrt(mask.shape[0]**2+mask.shape[1]**2)/2 ))     # diagonal/2 - short_side
+
 	for ang in [0, math.pi/2, math.pi, 3*math.pi/2]:
 		lightest = 0
-		for pixel in range(0, int(round(diagonal))):
+		for pixel in range(0, int(round(diagonal_half))):
 			pX = int(round(pixel * math.cos(ang) + center[0]))
 			pY = int(round(pixel * math.sin(ang) + center[1]))
 
@@ -220,40 +224,8 @@ def get_circle_from_mask(mask, diagonal):
 	return center, radius, arrivalidity
 
 
-# reads a glyph radially from its center
-# returns the mask(?) and a list of read data
-def read_data_from_center(mask, center, radius, angle, minDist, maxDistCheck):
-	# todo tune readsplits
-	readSplits = 3600
-	# reads data from frame in which a valid circle has been detected
-	radAngle = (angle)/180 * math.pi
-	#reads thickness of sign radially
-	result = []
-	for ang in np.linspace(0, 2 * math.pi, readSplits):
-		pixelSum = 0
-		for pixel in range(int(minDist), int(round(radius*maxDistCheck))):
-			pX = int(round(pixel * math.cos(ang + radAngle) + center[0]))
-			pY = int(round(pixel * math.sin(ang + radAngle) + center[1]))
-
-			if pX >= 0 and pX < mask.shape[1] and pY >= 0 and pY < mask.shape[0]:
-				if mask[pY][pX][0] > 0:
-					pixelSum += 1
-					# mask[pY,pX] = (255,0,0)
-			else:
-				break
-		result.append(pixelSum)
-
-	result = np.array(result)
-	result = np.trim_zeros(result, trim="f")
-	result = np.pad(result, (0, (readSplits - len(result)) % readSplits), 'constant')
-	result = result/radius*1000
-	# result[result == 0] = -1
-
-	return mask, result
-
-
 # finds the beginning and end of a given glyph
-# returns the mask, (start, end) of gap, percentage of inliers and the minimum radius
+# returns the mask, (start, end) of gap, percentage of inliers and the minimum radius for later read
 def find_ends(mask, center, radius, minDist, maxDistCheck):
 	start, end = None, None
 	inliers = 0
@@ -267,7 +239,7 @@ def find_ends(mask, center, radius, minDist, maxDistCheck):
 	last_coords = ()
 	gap = []
 
-	for ang in np.linspace(0, 2 * math.pi, read_splits):
+	for ang in np.linspace(int(round(radius/2)), 2 * math.pi, read_splits):
 		found = False
 
 		for pixel in range(int(round(radius*minDist)), int(round(radius*maxDistCheck))):
@@ -302,7 +274,6 @@ def find_ends(mask, center, radius, minDist, maxDistCheck):
 		last = found
 		last_coords = this_coords
 
-
 	mask = cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
 	cv2.circle(mask,center,1,(255,255,255),1)
 
@@ -315,11 +286,8 @@ def read_circle_segment(sign):
 	maxDistCheck = int(round(math.sqrt(sign.shape[0]**2+sign.shape[1]**2)/2))  # longest readable distance from center(half of diagonal of image)
 	read = []
 
-	diagonal_half = int(round(math.sqrt(sign.shape[0]**2+sign.shape[1]**2)/2 ))     # diagonal/2 - short_side
 
-
-
-	center, radius, arrivalidity = get_circle_from_mask(frame,diagonal_half)
+	center, radius, arrivalidity = get_circle_from_mask(frame)
 
 	# Todo tune arrivality limit
 	if arrivalidity > 150:
