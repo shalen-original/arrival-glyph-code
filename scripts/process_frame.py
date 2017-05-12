@@ -11,7 +11,6 @@ from scripts.decode_frame import *
 
 
 def process_frame(frame, show=False, debug=False, read=False):
-	output_size = (1280, 720)
 	data = []
 	intermediary = []
 	#intermediary.append(("original", frame))
@@ -66,7 +65,6 @@ def process_frame(frame, show=False, debug=False, read=False):
 
 	return chosen, intermediary, data
 
-
 # Draws all the circles and their centers on a given frame.
 # The drawn frame is returned.
 def __draw_all_circles(frame, circles):
@@ -97,10 +95,6 @@ def __random_color():
 	r = random.randint(0, 255)
 
 	return (b, g, r)
-
-
-
-
 
 # computes angle of vector from center in reference to zero PI
 def angleZeroRad(center, vector):

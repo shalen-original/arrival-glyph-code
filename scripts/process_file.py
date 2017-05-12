@@ -4,49 +4,53 @@ from scripts.samples_reader import *
 from scripts.process_frame import process_frame
 from scripts.result_display import *
 
-output_size = (1280, 720)
 
-def process_pictures(glyphs, numbers):
-	all_data = []
+def process_pictures(glyphs, numbers, show=True, save=False, debug=False, read=False):
+	all_read_data = []
 	for folder, file, img in image_samples(glyphs, numbers):
 		print("Processing glpyh ", file)
 
-		processed, intermediary, data = process_frame(img)
-		all_data.append(data)
-		# display(file, intermediary, save=False)
-		# display_sequential(file, intermediary, save=True)
-		# cv2.imshow(intermediary[-1][0], intermediary[-1][1])
-	return all_data
+		processed, intermediary, read_data = process_frame(img, show=False, debug=debug, read=read)
+		all_read_data.append(read_data)
+
+		if show:
+			if save:
+				display(file, intermediary, save=True)
+				# display_sequential(file, intermediary, save=True)
+			else:
+				display(file, intermediary)
+				# display_sequential(file, intermediary)
+
+	return all_read_data
 
 
-def process_all_pictures():
-	glyphs = []
-	numbers = []
-	all_data = process_pictures(glyphs, numbers)
-	return all_data
+# takes list of glyph-names and numbers.
+# save: saves the output in output folder if true
+# show: shows the video directly on the screen
+# output_size: specifies the dimensions of the output video
+# debug: shows debug information in the output video
+# read: sets whether found glyphs should be decoded
 
-
-def process_videos(glyphs, numbers, save=False, show=True, debug=False, read=False):
+def process_videos(glyphs, numbers, save=False, show=True, output_size=(1280, 720), debug=False, read=False):
 	all_data = []
 
+	if show:
+		print("Press Q to interrupt and process move to next video.")
 
 	for folder, file, video in video_samples(glyphs, numbers):
+		print("Processing glpyh ", file)
 		if save:
 			fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
-
 			filename =  file[0:file.index(".mp4")]
 			print(filename)
-			out = cv2.VideoWriter("out/" + filename + '.avi', fourcc, 20.0, (1280, 720))
-		print("Processing glpyh ", file)
-		# path = my_absolute_path + video
-		# print(path)
+			out = cv2.VideoWriter("out/" + filename + '.avi', fourcc, 20.0, output_size)
+
 		cap = cv2.VideoCapture(video)
 		while True:
 			ret, frame = cap.read()
 			if ret:
 				processed, intermediary, data = process_frame(frame, show=show, debug=debug, read=read)
 				all_data.append(data)
-
 
 				if save:
 					#todo ovethink what to save
@@ -56,25 +60,13 @@ def process_videos(glyphs, numbers, save=False, show=True, debug=False, read=Fal
 				break
 
 			# STOP if Q key is pressed
-			if cv2.waitKey(1) & 0xFF == ord('q'):
+			if show and cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 		if save:
 			out.release()
+
 		cap.release()
-		# display(file, intermediary, save=False)
-		# display_sequential(file, intermediary, save=True)
-		# cv2.imshow(intermediary[-1][0], intermediary[-1][1])
-
-
 	cv2.destroyAllWindows()
-
-	return all_data
-
-
-def process_all_videos():
-	glyphs = []
-	numbers = []
-	all_data = process_videos(glyphs, numbers)
 
 	return all_data
 
@@ -100,7 +92,6 @@ def img_resize(img, final_shape):
 	else:
 		resized = np.zeros((final_shape[1], final_shape[0]), dtype='uint8')
 		top_border, bottom_border, left_border, right_border = 0,0,0,0
-		print(resized.shape)
 
 	if len(resized.shape) == 2:
 		resized = cv2.cvtColor(resized, cv2.COLOR_GRAY2BGR)
