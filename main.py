@@ -8,21 +8,17 @@ from scripts.process_file import *
 def main():
 
 	# ALl glyphs, all numbers
-	# glyps = []
-	# numbers = []
+	#glyphs = []
+	#numbers = []
 
 	glyphs = ["AbbotIsDead"]
-	numbers = []
-
-	show_results = False
+	numbers = ["00"]
 
 	clean_output_folder()
 
-	# all_data = process_pictures(glyphs, numbers, show=True, save=False, debug=False, read=False)
-	all_data = process_videos(glyphs, numbers, save=True, show=True, debug=False, read=False)
+	#process_pictures(glyphs, numbers, debug = True)
+	process_videos(glyphs, numbers, debug = True)
 
-	if show_results:
-		print_graphs(all_data)
 
 
 
