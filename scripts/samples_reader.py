@@ -50,9 +50,14 @@ def image_samples(only_glyphs=[], only_numbers=[]):
             yield (folder, file, img)
 
 
+
+
+# Similar to the above, only for video samples. The third element of the tuple is the 
+# stream to the current video. The stream is already opened and will be automatically
+# closed by this function.
 def video_samples(only_glyphs=[], only_numbers=[]):
 
-    # Obtains the different foldes in SAMPLES_PATH. Each folder contains multiple
+    # Obtains the different folders in SAMPLES_PATH. Each folder contains multiple
     # videos of the same glyph. If only_glyphs is empty, all the folders are loaded,
     # otherwise only the folder which name is in only_glyphs are loaded.
     if only_glyphs:
@@ -68,8 +73,9 @@ def video_samples(only_glyphs=[], only_numbers=[]):
         glyphs = {folder: listdir(join(VIDEO_SAMPLES_PATH, folder)) for folder in glyphs_folders}
 
     # For each file in every folder, the tuple containing the folder, the file name and
-    # the loaded image is returned
+    # the loaded video stream is returned
     for folder in glyphs:
         for file in glyphs[folder]:
-            video = join(VIDEO_SAMPLES_PATH, folder,  file)
+            video = cv2.VideoCapture(join(VIDEO_SAMPLES_PATH, folder,  file))
             yield (folder, file, video)
+            video.release()
