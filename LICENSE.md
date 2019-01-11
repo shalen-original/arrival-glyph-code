@@ -1,0 +1,1 @@
+Copyright (C) 2019 Matteo Nardini and Raphael Pisoni. All rights reserved.
